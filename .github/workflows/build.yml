@@ -13,16 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 8
+      - name: Set up Java 17 for Gradle
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '8'
+          java-version: '17'
 
-      - name: Set up Gradle 4.10.3
+      - name: Set up Gradle 9.5.0
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '4.10.3'
+          gradle-version: '9.5.0'
 
       - name: Build
         run: gradle --no-daemon clean build
