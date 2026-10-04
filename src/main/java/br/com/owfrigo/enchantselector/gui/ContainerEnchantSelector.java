@@ -11,7 +11,7 @@ public class ContainerEnchantSelector extends Container {
     private final InventoryBasic enchantInventory = new InventoryBasic("Enchant Selector", false, 1);
 
     public ContainerEnchantSelector(EntityPlayer player) {
-        this.addSlotToContainer(new Slot(enchantInventory, 0, 45, 38) {
+        this.addSlotToContainer(new Slot(enchantInventory, 0, 80, 35) {
             @Override
             public int getSlotStackLimit() {
                 return 1;
@@ -27,12 +27,12 @@ public class ContainerEnchantSelector extends Container {
 
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
-                this.addSlotToContainer(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 102 + row * 18));
+                this.addSlotToContainer(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
             }
         }
 
         for (int col = 0; col < 9; col++) {
-            this.addSlotToContainer(new Slot(inv, col, 8 + col * 18, 160));
+            this.addSlotToContainer(new Slot(inv, col, 8 + col * 18, 142));
         }
     }
 
