@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -32,3 +35,12 @@ jobs:
         with:
           name: EnchantSelector-1.12.2
           path: build/libs/*.jar
+
+      - name: Publish testable JAR release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0-beta1
+          name: Enchant Selector 1.12.2 v1.0.0-beta1
+          prerelease: true
+          files: build/libs/*.jar
+          fail_on_unmatched_files: true
