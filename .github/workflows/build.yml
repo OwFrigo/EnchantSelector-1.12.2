@@ -39,8 +39,8 @@ jobs:
       - name: Publish testable JAR release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0-beta2
-          name: Enchant Selector 1.12.2 v1.0.0-beta2
+          tag_name: v1.0.0-beta3
+          name: Enchant Selector 1.12.2 v1.0.0-beta3
           prerelease: true
           files: build/libs/*.jar
           fail_on_unmatched_files: true
