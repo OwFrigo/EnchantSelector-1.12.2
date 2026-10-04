@@ -13,11 +13,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 17 for Gradle
+      - name: Set up Java 25 for Gradle
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '25'
 
       - name: Set up Gradle 9.5.0
         uses: gradle/actions/setup-gradle@v4
