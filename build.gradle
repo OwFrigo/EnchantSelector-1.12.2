@@ -20,7 +20,7 @@ archivesBaseName = "EnchantSelector-1.12.2"
 sourceCompatibility = targetCompatibility = "1.8"
 
 minecraft {
-    version = "1.12.2-14.23.5.2859"
+    version = "1.12.2-14.23.5.2847"
     runDir = "run"
     mappings = "stable_39"
 }
