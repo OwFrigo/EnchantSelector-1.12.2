@@ -29,14 +29,17 @@ public class GuiEnchantSelector extends GuiContainer {
     private static final int GUI_LIGHT = 0xFFFFFFFF;
     private static final int GUI_MID = 0xFF8B8B8B;
     private static final int GUI_DARK = 0xFF555555;
-    private static final int GUI_SLOT = 0xFF8B8B8B;
+    private static final int GUI_SLOT = 0xFFAAAAAA;
     private static final int GUI_TEXT = 0xFF404040;
     private static final int GUI_DISABLED = 0xFF7A7A7A;
-    private static final int GUI_SELECTED = 0xFFFFFF55;
+    private static final int GUI_SELECTED = 0xFFFFD24A;
+    private static final int GUI_EXISTING = 0xFF39D353;
+    private static final int GUI_BUTTON_FACE = 0xFFB8B8B8;
 
     private final ContainerEnchantSelector selector;
     private final List<Enchantment> visibleEnchantments = new ArrayList<>();
     private final Map<ResourceLocation, Integer> levels = new HashMap<>();
+    private final Map<ResourceLocation, Integer> originalLevels = new HashMap<>();
 
     private boolean unlocked = false;
     private int page = 0;
@@ -107,6 +110,7 @@ public class GuiEnchantSelector extends GuiContainer {
         page = 0;
         visibleEnchantments.clear();
         levels.clear();
+        originalLevels.clear();
 
         if (stack.isEmpty()) {
             return;
@@ -116,7 +120,9 @@ public class GuiEnchantSelector extends GuiContainer {
         for (Map.Entry<Enchantment, Integer> entry : current.entrySet()) {
             ResourceLocation id = entry.getKey().getRegistryName();
             if (id != null) {
-                levels.put(id, Math.min(10, Math.max(0, entry.getValue())));
+                int clamped = Math.min(10, Math.max(0, entry.getValue()));
+                levels.put(id, clamped);
+                originalLevels.put(id, clamped);
             }
         }
 
@@ -220,15 +226,18 @@ public class GuiEnchantSelector extends GuiContainer {
 
             int current = levels.containsKey(id) ? levels.get(id) : 0;
 
+            boolean shift = org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_LSHIFT)
+                    || org.lwjgl.input.Keyboard.isKeyDown(org.lwjgl.input.Keyboard.KEY_RSHIFT);
+
             if (mouseX >= guiLeft + RIGHT_PANEL_X + 7 && mouseX < guiLeft + RIGHT_PANEL_X + 24
                     && mouseY >= y && mouseY < y + 16) {
-                levels.put(id, Math.max(0, current - 1));
+                levels.put(id, shift ? 0 : Math.max(0, current - 1));
                 return;
             }
 
             if (mouseX >= guiLeft + RIGHT_PANEL_X + 152 && mouseX < guiLeft + RIGHT_PANEL_X + 169
                     && mouseY >= y && mouseY < y + 16) {
-                levels.put(id, Math.min(10, current + 1));
+                levels.put(id, shift ? 10 : Math.min(10, current + 1));
                 return;
             }
         }
@@ -258,7 +267,13 @@ public class GuiEnchantSelector extends GuiContainer {
         drawRect(x, y, x + 18, y + 18, GUI_DARK);
         drawRect(x + 1, y + 1, x + 18, y + 18, GUI_LIGHT);
         drawRect(x + 1, y + 1, x + 17, y + 17, GUI_SLOT);
-        drawRect(x + 2, y + 2, x + 17, y + 17, 0xFF373737);
+        drawRect(x + 2, y + 2, x + 17, y + 17, 0xFF8F8F8F);
+    }
+
+    private void drawSmallControl(int x, int y) {
+        drawRect(x, y, x + 18, y + 18, GUI_DARK);
+        drawRect(x + 1, y + 1, x + 18, y + 18, GUI_LIGHT);
+        drawRect(x + 2, y + 2, x + 17, y + 17, GUI_BUTTON_FACE);
     }
 
     private void drawInsetRow(int x, int y, int width, int height) {
@@ -300,8 +315,8 @@ public class GuiEnchantSelector extends GuiContainer {
             int y = guiTop + 18 + row * 17;
 
             drawInsetRow(guiLeft + RIGHT_PANEL_X + 5, y, 166, 16);
-            drawVanillaSlot(guiLeft + RIGHT_PANEL_X + 6, y - 1);
-            drawVanillaSlot(guiLeft + RIGHT_PANEL_X + 151, y - 1);
+            drawSmallControl(guiLeft + RIGHT_PANEL_X + 6, y - 1);
+            drawSmallControl(guiLeft + RIGHT_PANEL_X + 151, y - 1);
         }
     }
 
@@ -345,8 +360,11 @@ public class GuiEnchantSelector extends GuiContainer {
             }
 
             this.fontRenderer.drawString("-", RIGHT_PANEL_X + 12, y, GUI_TEXT);
-            this.fontRenderer.drawString(name, RIGHT_PANEL_X + 28, y,
-                    level > 0 ? GUI_SELECTED : GUI_TEXT);
+            int enchantColor = GUI_TEXT;
+            if (level > 0) {
+                enchantColor = originalLevels.containsKey(id) ? GUI_EXISTING : GUI_SELECTED;
+            }
+            this.fontRenderer.drawString(name, RIGHT_PANEL_X + 28, y, enchantColor);
             this.fontRenderer.drawString(Integer.toString(level), RIGHT_PANEL_X + 136, y, GUI_TEXT);
             this.fontRenderer.drawString("+", RIGHT_PANEL_X + 157, y, GUI_TEXT);
         }
@@ -361,5 +379,81 @@ public class GuiEnchantSelector extends GuiContainer {
         this.drawDefaultBackground();
         super.drawScreen(mouseX, mouseY, partialTicks);
         this.renderHoveredToolTip(mouseX, mouseY);
+        drawEnchantmentTooltip(mouseX, mouseY);
+    }
+
+    private void drawEnchantmentTooltip(int mouseX, int mouseY) {
+        int start = page * ROWS_PER_PAGE;
+        int end = Math.min(start + ROWS_PER_PAGE, visibleEnchantments.size());
+
+        for (int index = start; index < end; index++) {
+            int row = index - start;
+            int y = guiTop + 18 + row * 17;
+
+            int nameLeft = guiLeft + RIGHT_PANEL_X + 28;
+            int nameRight = guiLeft + RIGHT_PANEL_X + 145;
+
+            if (mouseX >= nameLeft && mouseX < nameRight && mouseY >= y && mouseY < y + 16) {
+                Enchantment enchantment = visibleEnchantments.get(index);
+                List<String> tooltip = new ArrayList<>();
+                tooltip.add(displayName(enchantment));
+
+                String description = enchantmentDescription(enchantment);
+                if (!description.isEmpty()) {
+                    tooltip.addAll(this.fontRenderer.listFormattedStringToWidth(description, 220));
+                }
+
+                ResourceLocation id = enchantment.getRegistryName();
+                if (id != null && !"minecraft".equals(id.getNamespace())) {
+                    tooltip.add("Mod: " + id.getNamespace());
+                }
+
+                this.drawHoveringText(tooltip, mouseX, mouseY);
+                return;
+            }
+        }
+    }
+
+    private String enchantmentDescription(Enchantment enchantment) {
+        ResourceLocation id = enchantment.getRegistryName();
+        if (id == null) {
+            return "";
+        }
+
+        String key = id.toString();
+        switch (key) {
+            case "minecraft:protection": return "Reduz a maior parte dos danos recebidos.";
+            case "minecraft:fire_protection": return "Reduz dano de fogo e o tempo em chamas.";
+            case "minecraft:feather_falling": return "Reduz dano de queda.";
+            case "minecraft:blast_protection": return "Reduz dano e impacto de explosoes.";
+            case "minecraft:projectile_protection": return "Reduz dano de flechas e outros projeteis.";
+            case "minecraft:respiration": return "Aumenta o tempo que voce consegue respirar debaixo d'agua.";
+            case "minecraft:aqua_affinity": return "Aumenta a velocidade de mineracao debaixo d'agua.";
+            case "minecraft:thorns": return "Pode devolver parte do dano a quem atacar voce.";
+            case "minecraft:depth_strider": return "Aumenta a velocidade de movimento na agua.";
+            case "minecraft:frost_walker": return "Congela a agua sob seus pes enquanto voce anda.";
+            case "minecraft:binding_curse": return "Impede remover a armadura equipada, salvo ao morrer.";
+            case "minecraft:sharpness": return "Aumenta o dano corpo a corpo.";
+            case "minecraft:smite": return "Aumenta o dano contra criaturas mortas-vivas.";
+            case "minecraft:bane_of_arthropods": return "Aumenta o dano contra artrópodes e aplica lentidao.";
+            case "minecraft:knockback": return "Aumenta o recuo causado ao atingir inimigos.";
+            case "minecraft:fire_aspect": return "Incendeia o alvo ao atacar.";
+            case "minecraft:looting": return "Aumenta a quantidade e a chance de drops de criaturas.";
+            case "minecraft:sweeping": return "Aumenta o dano do ataque de varredura.";
+            case "minecraft:efficiency": return "Aumenta a velocidade de mineracao.";
+            case "minecraft:silk_touch": return "Faz blocos droparem a si mesmos quando possivel.";
+            case "minecraft:unbreaking": return "Reduz a chance de perder durabilidade ao usar o item.";
+            case "minecraft:fortune": return "Aumenta a quantidade ou chance de certos drops de blocos.";
+            case "minecraft:power": return "Aumenta o dano causado por flechas.";
+            case "minecraft:punch": return "Aumenta o recuo causado pelas flechas.";
+            case "minecraft:flame": return "Faz as flechas incendiarem os alvos.";
+            case "minecraft:infinity": return "Permite disparar flechas sem consumi-las, mantendo uma no inventario.";
+            case "minecraft:luck_of_the_sea": return "Melhora a qualidade dos itens pescados.";
+            case "minecraft:lure": return "Reduz o tempo de espera para fisgar algo.";
+            case "minecraft:mending": return "Usa experiencia coletada para reparar a durabilidade do item.";
+            case "minecraft:vanishing_curse": return "Faz o item desaparecer quando o jogador morre.";
+            default:
+                return "Encantamento registrado por " + id.getNamespace() + ".";
+        }
     }
 }
