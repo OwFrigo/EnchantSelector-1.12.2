@@ -1,0 +1,16 @@
+[
+  {
+    "modid": "enchantselector",
+    "name": "Enchant Selector",
+    "description": "Standalone NEI-inspired enchantment selector with LOCKED and UNLOCKED modes.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "url": "",
+    "updateUrl": "",
+    "authorList": ["OwFrigo"],
+    "credits": "Inspired by the classic Not Enough Items enchantment selector.",
+    "logoFile": "",
+    "screenshots": [],
+    "dependencies": []
+  }
+]
