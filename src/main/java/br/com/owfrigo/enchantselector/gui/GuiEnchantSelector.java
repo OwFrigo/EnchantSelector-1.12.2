@@ -21,6 +21,18 @@ import java.util.Map;
 
 public class GuiEnchantSelector extends GuiContainer {
     private static final int ROWS_PER_PAGE = 7;
+    private static final int LEFT_PANEL_WIDTH = 176;
+    private static final int RIGHT_PANEL_X = 176;
+
+    // Vanilla-style GUI palette.
+    private static final int GUI_BG = 0xFFC6C6C6;
+    private static final int GUI_LIGHT = 0xFFFFFFFF;
+    private static final int GUI_MID = 0xFF8B8B8B;
+    private static final int GUI_DARK = 0xFF555555;
+    private static final int GUI_SLOT = 0xFF8B8B8B;
+    private static final int GUI_TEXT = 0xFF404040;
+    private static final int GUI_DISABLED = 0xFF7A7A7A;
+    private static final int GUI_SELECTED = 0xFFFFFF55;
 
     private final ContainerEnchantSelector selector;
     private final List<Enchantment> visibleEnchantments = new ArrayList<>();
@@ -38,8 +50,8 @@ public class GuiEnchantSelector extends GuiContainer {
     public GuiEnchantSelector(ContainerEnchantSelector container) {
         super(container);
         this.selector = container;
-        this.xSize = 360;
-        this.ySize = 184;
+        this.xSize = 352;
+        this.ySize = 166;
     }
 
     @Override
@@ -50,10 +62,12 @@ public class GuiEnchantSelector extends GuiContainer {
         int top = this.guiTop;
 
         this.buttonList.clear();
-        lockButton = new GuiButton(100, left + 14, top + 64, 90, 20, "");
-        applyButton = new GuiButton(101, left + 14, top + 84, 90, 20, "Apply");
-        previousButton = new GuiButton(102, left + 183, top + 158, 36, 20, "<");
-        nextButton = new GuiButton(103, left + 314, top + 158, 36, 20, ">");
+
+        lockButton = new GuiButton(100, left + 20, top + 55, 66, 20, "");
+        applyButton = new GuiButton(101, left + 90, top + 55, 66, 20, "Apply");
+
+        previousButton = new GuiButton(102, left + RIGHT_PANEL_X + 8, top + 140, 28, 20, "<");
+        nextButton = new GuiButton(103, left + RIGHT_PANEL_X + 140, top + 140, 28, 20, ">");
 
         this.buttonList.add(lockButton);
         this.buttonList.add(applyButton);
@@ -195,7 +209,7 @@ public class GuiEnchantSelector extends GuiContainer {
 
         for (int index = start; index < end; index++) {
             int row = index - start;
-            int y = guiTop + 25 + row * 18;
+            int y = guiTop + 18 + row * 17;
 
             Enchantment enchantment = visibleEnchantments.get(index);
             ResourceLocation id = enchantment.getRegistryName();
@@ -206,13 +220,13 @@ public class GuiEnchantSelector extends GuiContainer {
 
             int current = levels.containsKey(id) ? levels.get(id) : 0;
 
-            if (mouseX >= guiLeft + 198 && mouseX < guiLeft + 216
+            if (mouseX >= guiLeft + RIGHT_PANEL_X + 7 && mouseX < guiLeft + RIGHT_PANEL_X + 24
                     && mouseY >= y && mouseY < y + 16) {
                 levels.put(id, Math.max(0, current - 1));
                 return;
             }
 
-            if (mouseX >= guiLeft + 329 && mouseX < guiLeft + 347
+            if (mouseX >= guiLeft + RIGHT_PANEL_X + 152 && mouseX < guiLeft + RIGHT_PANEL_X + 169
                     && mouseY >= y && mouseY < y + 16) {
                 levels.put(id, Math.min(10, current + 1));
                 return;
@@ -232,35 +246,81 @@ public class GuiEnchantSelector extends GuiContainer {
         super.keyTyped(typedChar, keyCode);
     }
 
+    private void drawVanillaPanel(int x, int y, int width, int height) {
+        drawRect(x, y, x + width, y + height, GUI_BG);
+        drawRect(x, y, x + width, y + 1, GUI_LIGHT);
+        drawRect(x, y, x + 1, y + height, GUI_LIGHT);
+        drawRect(x, y + height - 1, x + width, y + height, GUI_DARK);
+        drawRect(x + width - 1, y, x + width, y + height, GUI_DARK);
+    }
+
+    private void drawVanillaSlot(int x, int y) {
+        drawRect(x, y, x + 18, y + 18, GUI_DARK);
+        drawRect(x + 1, y + 1, x + 18, y + 18, GUI_LIGHT);
+        drawRect(x + 1, y + 1, x + 17, y + 17, GUI_SLOT);
+        drawRect(x + 2, y + 2, x + 17, y + 17, 0xFF373737);
+    }
+
+    private void drawInsetRow(int x, int y, int width, int height) {
+        drawRect(x, y, x + width, y + height, GUI_DARK);
+        drawRect(x + 1, y + 1, x + width, y + height, GUI_LIGHT);
+        drawRect(x + 1, y + 1, x + width - 1, y + height - 1, GUI_MID);
+        drawRect(x + 2, y + 2, x + width - 1, y + height - 1, GUI_BG);
+    }
+
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-        drawRect(guiLeft, guiTop, guiLeft + xSize, guiTop + ySize, 0xFF202020);
-        drawRect(guiLeft + 5, guiTop + 5, guiLeft + 170, guiTop + ySize - 5, 0xFF303030);
-        drawRect(guiLeft + 175, guiTop + 5, guiLeft + xSize - 5, guiTop + ySize - 5, 0xFF303030);
+        drawVanillaPanel(guiLeft, guiTop, LEFT_PANEL_WIDTH, ySize);
+        drawVanillaPanel(guiLeft + RIGHT_PANEL_X, guiTop, 176, ySize);
 
-        drawRect(guiLeft + 44, guiTop + 37, guiLeft + 64, guiTop + 57, 0xFF8B8B8B);
-        drawRect(guiLeft + 45, guiTop + 38, guiLeft + 63, guiTop + 56, 0xFF161616);
+        // Separation between the inventory and enchantment list.
+        drawRect(guiLeft + RIGHT_PANEL_X - 1, guiTop + 4,
+                guiLeft + RIGHT_PANEL_X + 1, guiTop + ySize - 4, GUI_DARK);
 
+        // Dedicated item slot.
+        drawVanillaSlot(guiLeft + 79, guiTop + 34);
+
+        // Player inventory slots.
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                drawVanillaSlot(guiLeft + 7 + col * 18, guiTop + 83 + row * 18);
+            }
+        }
+
+        for (int col = 0; col < 9; col++) {
+            drawVanillaSlot(guiLeft + 7 + col * 18, guiTop + 141);
+        }
+
+        // Right-side enchantment entries.
         int start = page * ROWS_PER_PAGE;
         int end = Math.min(start + ROWS_PER_PAGE, visibleEnchantments.size());
 
         for (int index = start; index < end; index++) {
             int row = index - start;
-            int y = guiTop + 25 + row * 18;
-            drawRect(guiLeft + 183, y, guiLeft + 350, y + 16, 0xFF444444);
-            drawRect(guiLeft + 198, y, guiLeft + 216, y + 16, 0xFF5A5A5A);
-            drawRect(guiLeft + 329, y, guiLeft + 347, y + 16, 0xFF5A5A5A);
+            int y = guiTop + 18 + row * 17;
+
+            drawInsetRow(guiLeft + RIGHT_PANEL_X + 5, y, 166, 16);
+            drawVanillaSlot(guiLeft + RIGHT_PANEL_X + 6, y - 1);
+            drawVanillaSlot(guiLeft + RIGHT_PANEL_X + 151, y - 1);
         }
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        this.fontRenderer.drawString("Enchant Selector", 10, 10, 0xFFFFFF);
-        this.fontRenderer.drawString("Item", 14, 42, 0xDDDDDD);
-        this.fontRenderer.drawString("Enchantments", 183, 10, 0xFFFFFF);
+        this.fontRenderer.drawString("Enchant Selector", 8, 6, GUI_TEXT);
+        this.fontRenderer.drawString("Inventory", 8, 74, GUI_TEXT);
+        this.fontRenderer.drawString("Enchantments", RIGHT_PANEL_X + 8, 6, GUI_TEXT);
 
-        if (selector.getEnchantStack().isEmpty()) {
-            this.fontRenderer.drawString("Place an item in the slot", 14, 25, 0xAAAAAA);
+        ItemStack stack = selector.getEnchantStack();
+        if (stack.isEmpty()) {
+            this.fontRenderer.drawString("Item", 79, 22, GUI_DISABLED);
+        } else {
+            String itemName = stack.getDisplayName();
+            int maxWidth = 150;
+            while (this.fontRenderer.getStringWidth(itemName) > maxWidth && itemName.length() > 4) {
+                itemName = itemName.substring(0, itemName.length() - 4) + "...";
+            }
+            this.fontRenderer.drawString(itemName, 8, 22, GUI_TEXT);
         }
 
         int start = page * ROWS_PER_PAGE;
@@ -268,7 +328,7 @@ public class GuiEnchantSelector extends GuiContainer {
 
         for (int index = start; index < end; index++) {
             int row = index - start;
-            int y = 29 + row * 18;
+            int y = 22 + row * 17;
 
             Enchantment enchantment = visibleEnchantments.get(index);
             ResourceLocation id = enchantment.getRegistryName();
@@ -280,17 +340,20 @@ public class GuiEnchantSelector extends GuiContainer {
             int level = levels.containsKey(id) ? levels.get(id) : 0;
             String name = displayName(enchantment);
 
-            if (name.length() > 20) {
-                name = name.substring(0, 20) + "...";
+            while (this.fontRenderer.getStringWidth(name) > 99 && name.length() > 4) {
+                name = name.substring(0, name.length() - 4) + "...";
             }
 
-            this.fontRenderer.drawString("-", 204, y, 0xFFFFFF);
-            this.fontRenderer.drawString(name, 221, y, level > 0 ? 0xFFFF80 : 0xFFFFFF);
-            this.fontRenderer.drawString(Integer.toString(level), 312, y, 0xFFFFFF);
-            this.fontRenderer.drawString("+", 335, y, 0xFFFFFF);
+            this.fontRenderer.drawString("-", RIGHT_PANEL_X + 12, y, GUI_TEXT);
+            this.fontRenderer.drawString(name, RIGHT_PANEL_X + 28, y,
+                    level > 0 ? GUI_SELECTED : GUI_TEXT);
+            this.fontRenderer.drawString(Integer.toString(level), RIGHT_PANEL_X + 136, y, GUI_TEXT);
+            this.fontRenderer.drawString("+", RIGHT_PANEL_X + 157, y, GUI_TEXT);
         }
 
-        this.fontRenderer.drawString("Page " + (page + 1) + "/" + (maxPage() + 1), 250, 164, 0xBBBBBB);
+        String pageText = (page + 1) + "/" + (maxPage() + 1);
+        int pageWidth = this.fontRenderer.getStringWidth(pageText);
+        this.fontRenderer.drawString(pageText, RIGHT_PANEL_X + 88 - pageWidth / 2, 146, GUI_TEXT);
     }
 
     @Override
